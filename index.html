@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h1>Cadastro de Cliente</h1>
+  <form onsubmit="enviarFormulario(this); return false;">
+      <input type="text" name="nome" placeholder="Nome"><br>
+      <input type="text" name="telefone" placeholder="Telefone"><br>
+      <input type="text" name="rua" placeholder="Rua"><br>
+      <input type="number" name="numero" placeholder="Número"><br>
+      <button type="submit">Enviar</button>
+  </form>
+
+  <div id="resposta"></div>
+  <script src="./script.js"></script>
+</body>
+</html>
