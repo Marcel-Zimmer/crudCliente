@@ -1,65 +1,72 @@
 <?php
 require_once 'Cliente.php';
+require_once 'databaseCredentials.php';
 
 class Database{    
     private $db;
+    
 
     function __construct(){
-        $this->db = new PDO('sqlite:banco.sqlite');
+        global $servername, $username, $password, $dbname;
+        $this->db = new mysqli($servername, $username, $password, $dbname);
         $this->createDb();
     }
     
     public function createDb(){
-        $this->db -> exec("CREATE TABLE IF NOT EXISTS clientes(
-        id INTEGER PRIMARY KEY, 
-        nome TEXT, 
-        telefone TEXT,
-        rua TEXT, 
-        numero INTEGER)");
+        $this->db -> query("CREATE TABLE IF NOT EXISTS clientes(
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(100),
+        email VARCHAR(100),
+        telefone VARCHAR(20),
+        rua VARCHAR(100),
+        numero INT)");
     }
 
-    public function insertClient($nome, $telefone, $rua, $numero) : Cliente{
-        error_log("teste");
-        $statement = $this->db->prepare("INSERT INTO clientes (nome, telefone, rua, numero) VALUES (:nome, :telefone, :rua, :numero)");
-        $statement->bindValue(':nome', $nome);
-        $statement->bindValue(':telefone', $telefone);
-        $statement->bindValue(':rua', $rua);
-        $statement->bindValue(':numero', $numero);
+    public function insertClient($nome,$email, $telefone, $rua, $numero) : Cliente{
+
+        $statement = $this->db->prepare("INSERT INTO clientes (nome,email, telefone, rua, numero) VALUES (?, ?, ?, ?, ?)");
+        $statement->bind_param("ssssi", $nome, $email, $telefone, $rua, $numero);
         $statement->execute();
-        $cliente = new Cliente($this->db->lastInsertId(),$nome, $telefone, $rua, $numero);
-        return $cliente;
+        $id = $this->db->insert_id;
+        $cliente = new Cliente($id,$nome, $telefone,$email, $rua, $numero);
+        header('Content-Type: application/json');
+        echo json_encode($cliente);
+        exit; 
     }
-
-    public function updateCliente(Cliente $cliente){
-        $update = $this->db->prepare("UPDATE clientes SET nome = :nome, telefone = :telefone, rua = :rua, numero =:numero WHERE id = :id");
-        $update->bindValue(':id', $cliente->id);
-        $update->bindValue(':nome', $cliente->nome);
-        $update->bindValue(':telefone', $cliente->telefone);
-        $update->bindValue(':rua', $cliente->rua);
-        $update->bindValue(':numero', $cliente->numero);
+ 
+    public function updateCliente($id, $nome, $email, $telefone, $rua, $numero) {
+        $update = $this->db->prepare("UPDATE clientes SET nome = ?, email = ?, telefone = ?, rua = ?, numero = ? WHERE id = ?");
+        $update->bind_param("ssssii", $nome, $email, $telefone, $rua, $numero, $id);
         $update->execute();
+        $cliente = new Cliente($id, $nome, $telefone, $email, $rua, $numero);
+        header('Content-Type: application/json');
+        echo json_encode($cliente);
+        exit; 
     }
 
     public function deleteCliente($id){
-        $delete  = $this ->db ->prepare("DELETE FROM clientes WHERE id = :id");
-        $delete->bindValue(':id', $id);
+        $delete  = $this ->db ->prepare("DELETE FROM clientes WHERE id = ?");
+        $delete->bind_param("i", $id);
         $delete -> execute();
     }
 
     public function getAllClientes(){
-        $statement = $this->db->query("SELECT * FROM clientes");
         $clientes = [];
-        while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+        $result = $this->db->query("SELECT * FROM clientes");
+        
+        while ($row = $result->fetch_assoc()) {
             $clientes[] = new Cliente(
                 $row['id'],
                 $row['nome'],
+                $row['email'],
                 $row['telefone'],
                 $row['rua'],
                 $row['numero']
             );
         }
-    
-        return $clientes;
+        header('Content-Type: application/json');
+        echo json_encode($clientes);
+        exit; 
 
     }
 }   
